@@ -18,26 +18,29 @@ public class RxFixsServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		System.out.println("recevice post");
-		
+		String DATA_FORMAT = "DDMMYY, HHMMSS.SSS, ddmm.mmmmN, dddmm.mmmmE";
 		String fix = req.getParameter("fix");
-		String[] fixinfo = fix.split(", ");
 		
-		String lat_degree = fixinfo[2].substring(0, 2);
-		String lat_min = fixinfo[2].substring(2, 9);
-		String lat_NorS = fixinfo[2].substring(9);
-//		System.out.println(lat_degree + lat_min + lat_NorS);
-		String lng_degree = fixinfo[3].substring(0, 3);
-		String lng_min = fixinfo[3].substring(3, 10);
-		String lng_EorW = fixinfo[3].substring(10);
-//		System.out.println(lng_degree + lng_min + lng_EorW);
-		double lat, lng;
-		
-		lat = Double.valueOf(lat_degree) + Double.valueOf(lat_min) / 60d;
-		lat = (lat_NorS.equals("N"))?lat:-lat;
-		lng = Double.valueOf(lng_degree) + Double.valueOf(lng_min) / 60d;
-		lng = (lng_EorW.equals("E"))?lng:-lng;
-		
-		if (fix != null){
+		//basically check the input value's format is match or not.
+		if ( fix != null && (fix.length() == DATA_FORMAT.length()) ) {
+			System.out.println("Format correct!");
+			String[] fixinfo = fix.split(", ");
+			
+			String lat_degree = fixinfo[2].substring(0, 2);
+			String lat_min = fixinfo[2].substring(2, 9);
+			String lat_NorS = fixinfo[2].substring(9);
+//			System.out.println(lat_degree + lat_min + lat_NorS);
+			String lng_degree = fixinfo[3].substring(0, 3);
+			String lng_min = fixinfo[3].substring(3, 10);
+			String lng_EorW = fixinfo[3].substring(10);
+//			System.out.println(lng_degree + lng_min + lng_EorW);
+			double lat, lng;
+			
+			lat = Double.valueOf(lat_degree) + Double.valueOf(lat_min) / 60d;
+			lat = (lat_NorS.equals("N"))?lat:-lat;
+			lng = Double.valueOf(lng_degree) + Double.valueOf(lng_min) / 60d;
+			lng = (lng_EorW.equals("E"))?lng:-lng;
+			
 			PrintWriter out = resp.getWriter();
 			out.println(fix);
 			
@@ -47,7 +50,12 @@ public class RxFixsServlet extends HttpServlet {
 			} finally{
 				pm.close();	
 			}		
+		} else {
+			System.out.println("Format incorrect!");
+			PrintWriter out = resp.getWriter();
+			out.println("Data format incorrect!");
 		}
+		
 	}
 
 	@Override
