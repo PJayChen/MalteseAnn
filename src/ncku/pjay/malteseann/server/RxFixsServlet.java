@@ -104,6 +104,8 @@ public class RxFixsServlet extends HttpServlet {
 			}
 		} else if( fix != null && (fix.length() == DATA_FORMAT_DEVICE.length()) ) {
 			System.out.println("Device ID Format");
+			
+			//--- Parse the received string into meaningful part --- 
 			String[] fixinfo = fix.split(", ");
 			
 			String[] lat_degree_min_NorS = 
@@ -120,59 +122,71 @@ public class RxFixsServlet extends HttpServlet {
 			
 			double[] latLng = new double[2];
 			parseLatLngtoDegree(latLng, lat_degree_min_NorS, lng_degree_min_EorW);
-		
+			//---------------------------------------------------------
+			
+			/* ------------------------------------------------------------
+			 * --- Check the device ID(fixinfo[0]) exist or not 
+			 * --- If it is exit, check the date(fixinfo[1]) exist or not 
+			 */
+			
+			PersistenceManager pm = PMF.get().getPersistenceManager();
+			Query query = pm.newQuery( "SELECT FROM " 
+								+ Device.class.getName() 
+								+ " WHERE deviceID == '" 
+								+ fixinfo[0] + "'");
+
+			List<Device> deviceList = (List<Device>) query.execute();
+			
+			if (deviceList.isEmpty()) {
+				//device ID no exist, create new device ID
+				System.out.println("The device ID " + fixinfo[0] + " Not availible");
+				List<Date> date = new ArrayList<Date>();
+				List<PositionFix> positionFixs = new ArrayList<PositionFix>();
+				date.add(new Date(fixinfo[1], positionFixs));
+				positionFixs.add(new PositionFix(fixinfo[2], String.valueOf(latLng[0]), String.valueOf(latLng[1])));
+				pm.makePersistent(new Device(fixinfo[0], date));
+			} else {
+				for (Device device : deviceList) {
+					//Show each date
+					List<Date> dateList = new ArrayList<Date>();
+					dateList = device.getCreatedDate();
+					
+					Boolean exist = false;
+					for (Date date : dateList) {
+						//if the date is exist, add the position fix to that day 
+						if ( date.getCreateDate().equals(fixinfo[1]) ) {
+							List<PositionFix> positionList = new ArrayList<PositionFix>();
+							positionList = date.getPositionFixs();
+							positionList.add(new PositionFix(fixinfo[2], String.valueOf(latLng[0]), String.valueOf(latLng[1])));
+							exist = true;
+							break;
+						}
+					}
+					//if the date does not exist, create new date
+					if (!exist) {
+						dateList = device.getCreatedDate();
+						List<PositionFix> positionList = new ArrayList<PositionFix>();
+						positionList.add(new PositionFix(fixinfo[2], String.valueOf(latLng[0]), String.valueOf(latLng[1])));
+						dateList.add(new Date(fixinfo[1], positionList));
+					}
+				}
+			}
+			
+			/* ------------------------------------------------------------ */
+			
+			pm.close();
+			
+			//send the received data back to client
 			PrintWriter out = resp.getWriter();
 			out.println(fix);
 			
+			//Print the debug message to check datastore is correct or not
 			queryDevice(fixinfo[0]);
 		} else {
-//			System.out.println("Format incorrect!");
-//			PrintWriter out = resp.getWriter();
-//			out.println("Data format incorrect!");
-			PersistenceManager pm = PMF.get().getPersistenceManager();
-			List<Date> date = new ArrayList<Date>();
-			List<PositionFix> positionFixs = new ArrayList<PositionFix>();
-			
-			date.add(new Date("120415", positionFixs));
-			date.add(new Date("123459", null));
-			
-			positionFixs.add(new PositionFix("112233.000", "2211.1234N", "12011.1234E"));
-			positionFixs.add(new PositionFix("112233.000", "2211.1234N", "12011.1234E"));
-			//Device device = new Device("p001", positionFixs);
-			//device.setPositionFixs(positionFixs);			
-			try {
-				pm.makePersistent(new Device("p001", date));
-			} finally{
-				pm.close();	
-			}
-			
-			
-			pm = PMF.get().getPersistenceManager();
-			Query query = 
-					pm.newQuery( "SELECT FROM " + Device.class.getName() + " WHERE deviceID == 'p001'");
-			//Device d1 = (Device) query.execute();
-			List<Device> d1 = (List<Device>) query.execute();
-			for (Device dev : d1) {
-				List<Date> da1 = new ArrayList<Date>();
-				da1 = dev.getCreatedDate();
-				System.out.println("Device Name: " + dev.getDeviceName());
-				
-				for (Date date1 : da1) {
-					System.out.println("Date: " + date1.getCreateDate());
-					List<PositionFix> pos = new ArrayList<PositionFix>();
-					pos = date1.getPositionFixs();
-					for (PositionFix pp1 : pos) {
-						System.out.println("Position fix: " 
-								+ pp1.getTimeUTC() + ", " 
-								+ pp1.getLatitude() + ", "
-								+ pp1.getLongitude());
-					}
-				}
-			
-			}
-			
+			System.out.println("Format incorrect!");
+			PrintWriter out = resp.getWriter();
+			out.println("Data format incorrect!");
 		}
-		
 	}
 
 	@Override
