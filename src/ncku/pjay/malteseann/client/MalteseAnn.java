@@ -3,12 +3,17 @@ package ncku.pjay.malteseann.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import ncku.pjay.malteseann.shared.Date;
+import ncku.pjay.malteseann.shared.Device;
 import ncku.pjay.malteseann.shared.FixInfo;
+import ncku.pjay.malteseann.shared.PositionFix;
 
 import com.google.gwt.ajaxloader.client.ArrayHelper;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -41,6 +46,7 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.HorizontalSplitPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -56,30 +62,40 @@ public class MalteseAnn implements EntryPoint {
 	private VerticalPanel mainPanel = new VerticalPanel();
 	private HorizontalPanel postPanel = new HorizontalPanel();
 	private HorizontalPanel mapPanel = new HorizontalPanel();
+	private HorizontalPanel queryPanel = new HorizontalPanel();
 	
 	private Label msgLabel = new Label();
 	private Button sendBtn = new Button("Send");
 	private TextBox dataText = new TextBox();
 	private FlexTable fixsFlexTable = new FlexTable();
 	
-	private List<FixInfo> fixsList = new ArrayList<FixInfo>();
+	private Label deviceLabel = new Label("Device ID: ");
+	private Label dateLabel = new Label("Date: ");
+	private ListBox deviceListBox = new ListBox();
+	private ListBox dateListBox = new ListBox();
+		
 	
 	/* Initialize all widgets layout */
 	private void initWidgets(){
 		postPanel.add(dataText);
 		postPanel.add(sendBtn);
 		
-		mapPanel.add(fixsFlexTable);
+		queryPanel.add(deviceLabel);
+		queryPanel.add(deviceListBox);
+		queryPanel.add(dateLabel);
+		queryPanel.add(dateListBox);
 		
 		mainPanel.add(msgLabel);
 		mainPanel.add(postPanel);
+		mainPanel.add(queryPanel);
 		mainPanel.add(mapPanel);
+		mainPanel.add(fixsFlexTable);
 		RootPanel.get("mainList").add(mainPanel);
 		
-		msgLabel.setText("Hello!!");
+		msgLabel.setText("DeviceID, Date, UTCtime, Latitude, Longitude");
 		
 		dataText.setWidth("300px");
-		dataText.setText("300315, 065812.000, 2259.8259N, 12013.3452E");
+		dataText.setText("p001, 300315, 065812.000, 2259.8259N, 12013.3452E");
 		
 		fixsFlexTable.setText(0, 0, "id");
 		fixsFlexTable.setText(0, 1, "Date");
@@ -94,6 +110,7 @@ public class MalteseAnn implements EntryPoint {
 		fixsFlexTable.getCellFormatter().addStyleName(0, 2, "fixsListNumericColumn");
 		fixsFlexTable.getCellFormatter().addStyleName(0, 3, "fixsListNumericColumn");
 		fixsFlexTable.getCellFormatter().addStyleName(0, 4, "fixsListNumericColumn");
+		
 	}
 	
 	/* Initialize event handlers */
@@ -112,6 +129,33 @@ public class MalteseAnn implements EntryPoint {
 					doPost("http://127.0.0.1:8888/rxfix", dataText.getText());
 			    }
 			}
+		});
+			
+		deviceListBox.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				if (deviceListBox.getItemCount() != 0 ) { 
+					String item = deviceListBox.getItemText(deviceListBox.getSelectedIndex());
+					System.out.println(item);
+					getDateByDeviceIdFromDataStore(item);
+				}
+			}
+			
+		});
+				
+		dateListBox.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				if (dateListBox.getItemCount() != 0) {
+					getFixsByIdDateFromDataStore(
+							deviceListBox.getItemText(deviceListBox.getSelectedIndex()), 
+							dateListBox.getItemText(dateListBox.getSelectedIndex())
+					);
+				}
+			}
+			
 		});
 	}
 	
@@ -142,13 +186,51 @@ public class MalteseAnn implements EntryPoint {
 		  // handle this
 		}
 	}
+
+	/* ----------- Update web interface information ---------------*/
 	
-	/* Read all position fixs from database */
-	private void getFixsFromDB(){
+	private void updateFixsFlexTable(List<PositionFix> posFixs) {
+		
+		int row = 1;
+		
+		fixsFlexTable.removeAllRows();
+		fixsFlexTable.setText(0, 0, "Time");
+		fixsFlexTable.setText(0, 1, "Latitude");
+		fixsFlexTable.setText(0, 2, "Longitude");
+		fixsFlexTable.getRowFormatter().addStyleName(0, "fixsListHeader");
+		fixsFlexTable.addStyleName("fixsList");
+		
+		for(PositionFix fix : posFixs){
+			fixsFlexTable.setText(row, 0, fix.getTimeUTC());
+			fixsFlexTable.setText(row, 1, fix.getLatitude());
+			fixsFlexTable.setText(row, 2, fix.getLongitude());
+			fixsFlexTable.getCellFormatter().addStyleName(row, 0, "fixsListNumericColumn");
+			fixsFlexTable.getCellFormatter().addStyleName(row, 1, "fixsListNumericColumn");
+			fixsFlexTable.getCellFormatter().addStyleName(row, 2, "fixsListNumericColumn");
+			row++;
+		}
+	}
+	
+	private void updateMap(List<PositionFix> posFixs) {
+		drawMarkers(posFixs);
+		drawPolyLine(posFixs);
+	}
+	
+	private void updateWebPage(List<PositionFix> posFixs) {
+		updateFixsFlexTable(posFixs);
+		updateMap(posFixs);
+	}
+	/* ----------- -------------------------------- ---------------*/
+	
+	
+	/* -------------- RPC(Remote Procedure Call) Methods ------------------ */
+	
+	//Get the trajectory of specific day
+	private void getFixsByIdDateFromDataStore(String deviceId, String date) {
 		FixServiceAsync fixService = 
 				(FixServiceAsync) GWT.create(FixService.class);
-		fixService.getAllFixs(new AsyncCallback<List<FixInfo>>(){
-			                     
+		fixService.getPositionFixsByIdDate(deviceId, date, new AsyncCallback<List<PositionFix>>() {
+
 			@Override
 			public void onFailure(Throwable caught) {
 				// TODO Auto-generated method stub
@@ -156,35 +238,15 @@ public class MalteseAnn implements EntryPoint {
 			}
 
 			@Override
-			public void onSuccess(List<FixInfo> result) {
-				int row = 1;
+			public void onSuccess(List<PositionFix> result) {
 				
-				fixsList.clear();
-				fixsList.addAll(result);
-				drawMarkers(fixsList);
-				drawPolyLine(fixsList);
+				updateWebPage(result);
 				
-				fixsFlexTable.removeAllRows();
-				fixsFlexTable.setText(0, 0, "id");
-				fixsFlexTable.setText(0, 1, "Date");
-				fixsFlexTable.setText(0, 2, "Time");
-				fixsFlexTable.setText(0, 3, "Latitude");
-				fixsFlexTable.setText(0, 4, "Longitude");
-				fixsFlexTable.getRowFormatter().addStyleName(0, "fixsListHeader");
-				fixsFlexTable.addStyleName("fixsList");
-				
-				for(FixInfo fix : result){
-					
-					fixsFlexTable.setText(row, 0, fix.getId().toString());
-					fixsFlexTable.setText(row, 1, fix.getCreatedDate());
-					fixsFlexTable.setText(row, 2, fix.getTimeUTC());
-					fixsFlexTable.setText(row, 3, fix.getLatitude());
-					fixsFlexTable.setText(row, 4, fix.getLongitude());
-					fixsFlexTable.getCellFormatter().addStyleName(row, 1, "fixsListNumericColumn");
-					fixsFlexTable.getCellFormatter().addStyleName(row, 2, "fixsListNumericColumn");
-					fixsFlexTable.getCellFormatter().addStyleName(row, 3, "fixsListNumericColumn");
-					fixsFlexTable.getCellFormatter().addStyleName(row, 4, "fixsListNumericColumn");
-					row++;
+				//print debug message
+				for (PositionFix pos : result) {
+					System.out.println(pos.getTimeUTC() + ", " 
+							+ pos.getLatitude() + ", " 
+							+ pos.getLongitude());
 				}
 				
 			}
@@ -192,6 +254,56 @@ public class MalteseAnn implements EntryPoint {
 		});
 	}
 	
+	//Get the date which has trajectory record by specific device ID 
+	private void getDateByDeviceIdFromDataStore(String deviceId) {
+		FixServiceAsync fixService = 
+				(FixServiceAsync) GWT.create(FixService.class);
+		fixService.getDateByID(deviceId, new AsyncCallback<List<Date>>() {
+
+			@Override
+			public void onFailure(Throwable caught) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onSuccess(List<Date> result) {
+				dateListBox.clear();
+				for (Date date : result) {
+					dateListBox.addItem(date.getCreateDate());
+				}
+				
+			}
+			
+		});
+	}
+	
+	//get all devices ID
+	private void getDeviceIDfromDataStore() {
+		FixServiceAsync fixService = 
+				(FixServiceAsync) GWT.create(FixService.class);
+		fixService.getAllDevice(new AsyncCallback<List<Device>>() {
+
+			@Override
+			public void onFailure(Throwable caught) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onSuccess(List<Device> result) {
+				deviceListBox.clear();
+				for (Device device : result) {
+					deviceListBox.addItem(device.getDeviceName());
+				}
+			}
+			
+		});
+	}
+	/* -------------- --------------------------------- ------------------ */
+	
+	
+	/* --------------- Methods about Google Maps API --------------------- */
 	private void loadMapApi() {
 	    boolean sensor = true;
 
@@ -225,17 +337,19 @@ public class MalteseAnn implements EntryPoint {
 
 	    mapWidget = new MapWidget(opts);
 	    mapPanel.add(mapWidget);
-	    mapWidget.setSize("750px", "500px");
+	    mapWidget.setSize("1024px", "700px");
 	}
 	
 	private Marker marker;
 	//record all markers
 	private List<Marker> markers = new ArrayList<Marker>();
 	/* Draw markers on map */
-	private void drawMarkers(List<FixInfo> fixs){
+	private void drawMarkers(List<PositionFix> fixs){
 		clearMakers();
-		for(FixInfo f: fixs){
-			LatLng fix = LatLng.newInstance(Double.valueOf(f.getLatitude()), Double.valueOf(f.getLongitude()));
+		for(PositionFix f: fixs){
+			LatLng fix = LatLng.newInstance(Double.valueOf(f.getLatitude()), 
+											Double.valueOf(f.getLongitude())
+										   );
 			MarkerOptions options = MarkerOptions.newInstance();
 		    options.setPosition(fix);
 		   // options.setTitle("Hello World");
@@ -245,7 +359,7 @@ public class MalteseAnn implements EntryPoint {
 		    markers.add(marker);
 		}				
 	}
-	
+		
 	/* Remove all makers from the mapWidget*/
 	private void clearMakers() {
 	    if (mapWidget != null) {
@@ -260,11 +374,11 @@ public class MalteseAnn implements EntryPoint {
 	}
 	
 	private Polyline polyLine;
-	private void drawPolyLine(List<FixInfo> fixs) {
+	private void drawPolyLine(List<PositionFix> fixs) {
 		clearPolyLine(polyLine);
 		LatLng[] tmp_LatLng = new LatLng[fixs.size()];
 		int i = 0;
-		for(FixInfo f: fixs){
+		for(PositionFix f: fixs){
 			tmp_LatLng[i++] = LatLng.newInstance(Double.valueOf(f.getLatitude()), Double.valueOf(f.getLongitude()));
 		}
 		JsArray<LatLng> fixs_LatLng = ArrayHelper.toJsArray(tmp_LatLng) ;
@@ -320,6 +434,8 @@ public class MalteseAnn implements EntryPoint {
 			}
 		}
 	}
+	/* --------------- ----------------------------- --------------------- */
+	
 	
 	/**
 	 * This is the entry point method.
@@ -328,17 +444,18 @@ public class MalteseAnn implements EntryPoint {
 		initHandlers();
 		initWidgets();		
 		
+		getDeviceIDfromDataStore();
+		
 		/* Initialize maps api and draw the map*/
 		loadMapApi();
-		drawMarkers(fixsList);
 		
-		Timer refreshTimer = new Timer(){
-
-			@Override
-			public void run() {
-				getFixsFromDB();
-			}
-		};
-		refreshTimer.scheduleRepeating(1000);//0.5s
+//		Timer refreshTimer = new Timer(){
+//
+//			@Override
+//			public void run() {
+//				
+//			}
+//		};
+//		refreshTimer.scheduleRepeating(1000);//0.5s
 	}
 }
