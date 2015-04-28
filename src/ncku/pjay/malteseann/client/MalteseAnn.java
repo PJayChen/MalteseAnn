@@ -73,7 +73,8 @@ public class MalteseAnn implements EntryPoint {
 	private Label dateLabel = new Label("Date: ");
 	private ListBox deviceListBox = new ListBox();
 	private ListBox dateListBox = new ListBox();
-		
+	
+	private String locDeviceId, locDate;
 	
 	/* Initialize all widgets layout */
 	private void initWidgets(){
@@ -148,11 +149,19 @@ public class MalteseAnn implements EntryPoint {
 
 			@Override
 			public void onClick(ClickEvent event) {
+				refreshTimer.cancel(); //Stop timer
 				if (dateListBox.getItemCount() != 0) {
+					
+					locDeviceId = deviceListBox.getItemText(deviceListBox.getSelectedIndex());
+					locDate = dateListBox.getItemText(dateListBox.getSelectedIndex());
+					
 					getFixsByIdDateFromDataStore(
 							deviceListBox.getItemText(deviceListBox.getSelectedIndex()), 
 							dateListBox.getItemText(dateListBox.getSelectedIndex())
 					);
+					
+					//use timer to get the data from datastore repeatedly
+					refreshTimer.scheduleRepeating(5000); //ms
 				}
 			}
 			
@@ -437,6 +446,16 @@ public class MalteseAnn implements EntryPoint {
 	/* --------------- ----------------------------- --------------------- */
 	
 	
+	Timer refreshTimer = new Timer(){
+
+		@Override
+		public void run() {
+			System.out.println("Timer is running");
+			getFixsByIdDateFromDataStore(locDeviceId, locDate);
+		}
+	};
+
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -448,14 +467,5 @@ public class MalteseAnn implements EntryPoint {
 		
 		/* Initialize maps api and draw the map*/
 		loadMapApi();
-		
-//		Timer refreshTimer = new Timer(){
-//
-//			@Override
-//			public void run() {
-//				
-//			}
-//		};
-//		refreshTimer.scheduleRepeating(1000);//0.5s
 	}
 }
