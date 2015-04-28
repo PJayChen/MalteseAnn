@@ -62,6 +62,7 @@ public class FixServiceImpl extends RemoteServiceServlet implements FixService {
 			}
 		}
 		
+		pm.close();
 		return returnList;
 	}
 
@@ -87,6 +88,7 @@ public class FixServiceImpl extends RemoteServiceServlet implements FixService {
 			}
 		}
 		
+		pm.close();
 		return returnList;
 	}
 
