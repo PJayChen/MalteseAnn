@@ -26,7 +26,7 @@ public class Device implements Serializable {
 	@Persistent
 	private String deviceID;
 	
-	@Persistent
+	@Persistent(mappedBy = "device")
 	private List<Date> createdDate;
 
 	public Device() {

@@ -134,7 +134,7 @@ public class RxFixsServlet extends HttpServlet {
 								+ Device.class.getName() 
 								+ " WHERE deviceID == '" 
 								+ fixinfo[0] + "'");
-
+			
 			List<Device> deviceList = (List<Device>) query.execute();
 			
 			if (deviceList.isEmpty()) {
@@ -142,9 +142,12 @@ public class RxFixsServlet extends HttpServlet {
 				System.out.println("The device ID " + fixinfo[0] + " Not availible");
 				List<Date> date = new ArrayList<Date>();
 				List<PositionFix> positionFixs = new ArrayList<PositionFix>();
-				date.add(new Date(fixinfo[1], positionFixs));
-				positionFixs.add(new PositionFix(fixinfo[2], String.valueOf(latLng[0]), String.valueOf(latLng[1])));
-				pm.makePersistent(new Device(fixinfo[0], date));
+				Device newDevice = new Device(fixinfo[0], date);
+				
+				Date newDate = new Date(newDevice, fixinfo[1], positionFixs);
+				date.add(newDate);
+				positionFixs.add(new PositionFix(newDate, fixinfo[2], String.valueOf(latLng[0]), String.valueOf(latLng[1])));
+				pm.makePersistent(newDevice);
 			} else {
 				for (Device device : deviceList) {
 					//Show each date
@@ -157,7 +160,7 @@ public class RxFixsServlet extends HttpServlet {
 						if ( date.getCreateDate().equals(fixinfo[1]) ) {
 							List<PositionFix> positionList = new ArrayList<PositionFix>();
 							positionList = date.getPositionFixs();
-							positionList.add(new PositionFix(fixinfo[2], String.valueOf(latLng[0]), String.valueOf(latLng[1])));
+							positionList.add(new PositionFix(date, fixinfo[2], String.valueOf(latLng[0]), String.valueOf(latLng[1])));
 							exist = true;
 							break;
 						}
@@ -166,8 +169,9 @@ public class RxFixsServlet extends HttpServlet {
 					if (!exist) {
 						dateList = device.getCreatedDate();
 						List<PositionFix> positionList = new ArrayList<PositionFix>();
-						positionList.add(new PositionFix(fixinfo[2], String.valueOf(latLng[0]), String.valueOf(latLng[1])));
-						dateList.add(new Date(fixinfo[1], positionList));
+						Date newDate = new Date(device, fixinfo[1], positionList);
+						positionList.add(new PositionFix(newDate, fixinfo[2], String.valueOf(latLng[0]), String.valueOf(latLng[1])));
+						dateList.add(newDate);
 					}
 				}
 			}

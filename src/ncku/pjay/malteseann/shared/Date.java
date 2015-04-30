@@ -23,25 +23,36 @@ public class Date implements Serializable {
 	@Extension(vendorName = "datanucleus", key = "gae.encoded-pk", value = "true")
 	private String id;
 	
+	@Persistent
+	private Device device; //parent
 	
 	@Persistent
 	private String createDate;
 	
-	@Persistent
+	@Persistent(mappedBy = "date")
 	private List<PositionFix> positionFixs;
 
 	public Date() {
 		
 	}
 	
-	public Date(String createDate, List<PositionFix> positionFixs) {
+	public Date(Device device, String createDate, List<PositionFix> positionFixs) {
 		super();
+		this.device = device;
 		this.createDate = createDate;
 		this.positionFixs = positionFixs;
 	}
 
 	public String getId() {
 		return id;
+	}
+
+	public Device getDevice() {
+		return device;
+	}
+
+	public void setDevice(Device device) {
+		this.device = device;
 	}
 
 	public String getCreateDate() {

@@ -22,8 +22,8 @@ public class PositionFix implements Serializable {
 	@Extension(vendorName = "datanucleus", key = "gae.encoded-pk", value = "true")
 	private String id;
 	
-//	@Persistent
-//	private String date; //ddmmyy
+	@Persistent
+	private Date date; //parent
 	
 	@Persistent
 	private String timeUTC; //UTC time, hhmmss.sss
@@ -38,27 +38,31 @@ public class PositionFix implements Serializable {
 		
 	}
 	
-	public PositionFix(String timeUTC,
-			String latitude, String longitude) {
+
+	public PositionFix(Date date, String timeUTC, String latitude,
+			String longitude) {
 		super();
-//		this.date = date;
+		this.date = date;
 		this.timeUTC = timeUTC;
 		this.latitude = latitude;
 		this.longitude = longitude;
 	}
 
-	
+
 	public String getId() {
 		return id;
 	}
-//
-//	public String getDate() {
-//		return date;
-//	}
-//
-//	public void setDate(String date) {
-//		this.date = date;
-//	}
+
+
+	public Date getDate() {
+		return date;
+	}
+
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
 
 	public String getTimeUTC() {
 		return timeUTC;
