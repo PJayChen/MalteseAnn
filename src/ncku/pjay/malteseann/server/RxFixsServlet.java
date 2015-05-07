@@ -190,6 +190,7 @@ public class RxFixsServlet extends HttpServlet {
 			System.out.println("Format incorrect!");
 			PrintWriter out = resp.getWriter();
 			out.println("Data format incorrect!");
+			out.println("echo: " + fix);
 		}
 	}
 
