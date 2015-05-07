@@ -74,7 +74,10 @@ public class MalteseAnn implements EntryPoint {
 	private ListBox deviceListBox = new ListBox();
 	private ListBox dateListBox = new ListBox();
 	
+	private Button moveMapCenterBtn = new Button("Center");
+	
 	private String locDeviceId, locDate;
+	private LatLng latestMapCenter;
 	
 	/* Initialize all widgets layout */
 	private void initWidgets(){
@@ -85,6 +88,7 @@ public class MalteseAnn implements EntryPoint {
 		queryPanel.add(deviceListBox);
 		queryPanel.add(dateLabel);
 		queryPanel.add(dateListBox);
+		queryPanel.add(moveMapCenterBtn);
 		
 		mainPanel.add(msgLabel);
 		mainPanel.add(postPanel);
@@ -131,7 +135,17 @@ public class MalteseAnn implements EntryPoint {
 			    }
 			}
 		});
+		
+		moveMapCenterBtn.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				//Set map center to the latest position fix
+				mapWidget.setCenter(latestMapCenter);	
+			}
 			
+		});
+		
 		deviceListBox.addClickHandler(new ClickHandler() {
 
 			@Override
@@ -159,7 +173,7 @@ public class MalteseAnn implements EntryPoint {
 							deviceListBox.getItemText(deviceListBox.getSelectedIndex()), 
 							dateListBox.getItemText(dateListBox.getSelectedIndex())
 					);
-					
+										
 					//use timer to get the data from datastore repeatedly
 					refreshTimer.scheduleRepeating(5000); //ms
 				}
@@ -250,6 +264,11 @@ public class MalteseAnn implements EntryPoint {
 			public void onSuccess(List<PositionFix> result) {
 				
 				updateWebPage(result);
+				
+				latestMapCenter = LatLng.newInstance(
+						Double.valueOf(result.get(result.size() - 1).getLatitude()), 
+						Double.valueOf(result.get(result.size() - 1).getLongitude())
+				);
 				
 				//print debug message
 				for (PositionFix pos : result) {
