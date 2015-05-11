@@ -5,15 +5,12 @@ import java.util.List;
 
 import ncku.pjay.malteseann.shared.Date;
 import ncku.pjay.malteseann.shared.Device;
-import ncku.pjay.malteseann.shared.FixInfo;
 import ncku.pjay.malteseann.shared.PositionFix;
 
 import com.google.gwt.ajaxloader.client.ArrayHelper;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -39,16 +36,13 @@ import com.google.gwt.maps.client.overlays.PolylineOptions;
 import com.google.gwt.maps.client.overlays.Symbol;
 import com.google.gwt.maps.client.overlays.SymbolPath;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.HorizontalSplitPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -380,12 +374,16 @@ public class MalteseAnn implements EntryPoint {
 										   );
 			MarkerOptions options = MarkerOptions.newInstance();
 		    options.setPosition(fix);
-		   // options.setTitle("Hello World");
+		    options.setTitle(f.getTimeUTC() + ", " + f.getLatitude() + ", " + f.getLongitude());
 
 		    marker = Marker.newInstance(options);
 		    marker.setMap(mapWidget);
+		    
+		    //recode the marker for clear it from map 
 		    markers.add(marker);
-		}				
+		    
+		    	    		    
+		}
 	}
 		
 	/* Remove all makers from the mapWidget*/
@@ -400,7 +398,7 @@ public class MalteseAnn implements EntryPoint {
 	        }
 	    }
 	}
-	
+		
 	private Polyline polyLine;
 	private void drawPolyLine(List<PositionFix> fixs) {
 		clearPolyLine(polyLine);
@@ -462,6 +460,7 @@ public class MalteseAnn implements EntryPoint {
 			}
 		}
 	}
+
 	/* --------------- ----------------------------- --------------------- */
 	
 	
