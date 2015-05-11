@@ -188,6 +188,7 @@ public class RxFixsServlet extends HttpServlet {
 			queryDevice(fixinfo[0]);
 		} else {
 			System.out.println("Format incorrect!");
+			System.out.println(fix);
 			PrintWriter out = resp.getWriter();
 			out.println("Data format incorrect!");
 			out.println("echo: " + fix);
