@@ -146,7 +146,7 @@ public class MalteseAnn implements EntryPoint {
 			public void onClick(ClickEvent event) {
 				if (deviceListBox.getItemCount() != 0 ) { 
 					String item = deviceListBox.getItemText(deviceListBox.getSelectedIndex());
-					System.out.println(item);
+					System.out.println("Client-side > " + item);
 					getDateByDeviceIdFromDataStore(item);
 				}
 			}
@@ -266,7 +266,7 @@ public class MalteseAnn implements EntryPoint {
 				
 				//print debug message
 				for (PositionFix pos : result) {
-					System.out.println(pos.getTimeUTC() + ", " 
+					System.out.println("Client-side > " + pos.getTimeUTC() + ", " 
 							+ pos.getLatitude() + ", " 
 							+ pos.getLongitude());
 				}
@@ -468,7 +468,7 @@ public class MalteseAnn implements EntryPoint {
 
 		@Override
 		public void run() {
-			System.out.println("Timer is running");
+			System.out.println("Client-side > " + "Timer is running");
 			getFixsByIdDateFromDataStore(locDeviceId, locDate);
 		}
 	};

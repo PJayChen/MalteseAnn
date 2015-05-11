@@ -40,21 +40,22 @@ public class RxFixsServlet extends HttpServlet {
 		List<Device> deviceList = (List<Device>) query.execute();
 		
 		if (deviceList.isEmpty()) {
-			System.out.println("The device ID " + deviceID + " Not availible");
+			System.out.println("Server-side > " + "The device ID " + deviceID + " Not availible");
 		} else {
 			for (Device device : deviceList) {
 				//Show each date
 				List<Date> dateList = new ArrayList<Date>();
 				dateList = device.getCreatedDate();
-				System.out.println("Device Name: " + device.getDeviceName());
+				System.out.println("Server-side > " + "Device Name: " + device.getDeviceName());
 				
 				for (Date date : dateList) {
-					System.out.println("Date: " + date.getCreateDate());
+					System.out.println("Server-side > " + "Date: " + date.getCreateDate());
 					List<PositionFix> positionList = new ArrayList<PositionFix>();
 					positionList = date.getPositionFixs();
 					//Show all position fixs under this date
 					for (PositionFix position : positionList) {
-						System.out.println("Position fix: " 
+						System.out.println("Server-side > " 
+								+ "Position fix: " 
 								+ position.getTimeUTC() + ", " 
 								+ position.getLatitude() + ", "
 								+ position.getLongitude());
@@ -67,14 +68,14 @@ public class RxFixsServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		System.out.println("recevice post");
+		System.out.println("Server-side > " + "recevice post");
 		String DATA_FORMAT = "DDMMYY, HHMMSS.SSS, ddmm.mmmmN, dddmm.mmmmE";
 		String DATA_FORMAT_DEVICE = "PNNN, DDMMYY, HHMMSS.SSS, ddmm.mmmmN, dddmm.mmmmE";
 		String fix = req.getParameter("fix");
 		
 		//basically check the input value's format is match or not.
 		if ( fix != null && (fix.length() == DATA_FORMAT.length()) ) {
-			System.out.println("No Device ID Format");
+			System.out.println("Server-side > " + "No Device ID Format");
 			
 			String[] fixinfo = fix.split(", ");
 			
@@ -103,7 +104,7 @@ public class RxFixsServlet extends HttpServlet {
 				pm.close();	
 			}
 		} else if( fix != null && (fix.length() == DATA_FORMAT_DEVICE.length()) ) {
-			System.out.println("Device ID Format");
+			System.out.println("Server-side > " + "Device ID Format");
 			
 			//--- Parse the received string into meaningful part --- 
 			String[] fixinfo = fix.split(", ");
@@ -139,7 +140,7 @@ public class RxFixsServlet extends HttpServlet {
 			
 			if (deviceList.isEmpty()) {
 				//device ID no exist, create new device ID
-				System.out.println("The device ID " + fixinfo[0] + " Not availible");
+				System.out.println("Server-side > " + "The device ID " + fixinfo[0] + " Not availible");
 				List<Date> date = new ArrayList<Date>();
 				List<PositionFix> positionFixs = new ArrayList<PositionFix>();
 				Device newDevice = new Device(fixinfo[0], date);
@@ -187,8 +188,8 @@ public class RxFixsServlet extends HttpServlet {
 			//Print the debug message to check datastore is correct or not
 			queryDevice(fixinfo[0]);
 		} else {
-			System.out.println("Format incorrect!");
-			System.out.println(fix);
+			System.out.println("Server-side > " + "Format incorrect!");
+			System.out.println("Server-side > " + fix);
 			PrintWriter out = resp.getWriter();
 			out.println("Data format incorrect!");
 			out.println("echo: " + fix);
